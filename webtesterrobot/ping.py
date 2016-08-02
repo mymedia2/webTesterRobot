@@ -11,27 +11,25 @@
 #
 #  webTesterRobot распространяется в надежде, что он будет полезным,
 #  но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#  или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Афферо Стандартной
+#  или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Афферо стандартной
 #  общественной лицензии GNU.
 #
 #  Вы должны были получить копию Aфферо стандартной общественной лицензии GNU
 #  вместе с этой программой. Если это не так, см. http://www.gnu.org/licenses
 
-import json
 import os
 import html
 import re
 import subprocess
 import telebot
 
-config = json.loads(open("config.json").read())
-
-bot = telebot.TeleBot(config["token"])
+bot = telebot.TeleBot(os.environ["BOT_TOKEN"])
 
 USAGE = "<b>Неверный формат</b>\nИспользование: <code>/ping имя_хоста</code>"
 ERROR = "<b>Произошла ошибка</b>\n{}"
 OK = "<pre>{}</pre>"
 WAITING = "Ожидайте…"
+HELLO = "Привет!\nВоспользуйтесь командой /ping"
 
 host_pattern = re.compile("^\w([-_\w]*\.)*[-_\w]*$|^([0-9a-f]?:?)+$", re.I)
 
@@ -43,9 +41,9 @@ def ping_pong(message):
         bot.send_message(chat_id=message.chat.id, text=USAGE,
                          parse_mode="html")
         return
-    place = bot.send_message(chat_id=message.chat.id, text=WAITING,
-                             parse_mode="html")
-    result = subprocess.getstatusoutput("ping -c5 -- {}".format(host))
+    place = bot.send_message(chat_id=message.chat.id, text=WAITING)
+    result = subprocess.getstatusoutput("LANG=ru_RU.UTF-8 ping -c5 -- {}"
+                                        .format(host))
     if result[0] == 2:
         reason = result[1].split(": ")[2]
         bot.edit_message_text(chat_id=message.chat.id,
@@ -56,6 +54,10 @@ def ping_pong(message):
     bot.edit_message_text(chat_id=message.chat.id, message_id=place.message_id,
                           text=OK.format(html.escape(result[1])),
                           parse_mode="html")
+
+@bot.message_handler(commands=["start"])
+def helper(message):
+    bot.send_message(chat_id=message.chat.id, text=HELLO)
 
 if __name__ == "__main__":
     bot.polling()
