@@ -1,1 +1,1 @@
-worker: python3 webtesterrobot/ping.py
+worker: python -m webtesterrobot
