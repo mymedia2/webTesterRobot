@@ -27,6 +27,7 @@ bot = telebot.TeleBot(os.environ["BOT_TOKEN"])
 
 USAGE = "<b>Неверный формат</b>\nИспользование: <code>/ping имя_хоста</code>"
 ERROR = "<b>Произошла ошибка</b>\n{}"
+DEPENDS = "<b>Внутренняя ошибка</b>\nНе установлены зависимости"
 OK = "<pre>{}</pre>"
 WAITING = "Ожидайте…"
 HELLO = "Привет!\nВоспользуйтесь командой /ping"
@@ -39,6 +40,11 @@ def ping_pong(message):
     host = arguments[1] if len(arguments) == 2 else "<INVALID-HOST>"
     if not host_pattern.match(host):
         bot.send_message(chat_id=message.chat.id, text=USAGE,
+                         parse_mode="html")
+        return
+    # Не нравится эта идея. Надо избавиться от этой проверки в этом месте
+    if os.system("which ping > /dev/null") != 0:
+        bot.send_message(chat_id=message.chat.id, text=DEPENDS,
                          parse_mode="html")
         return
     place = bot.send_message(chat_id=message.chat.id, text=WAITING)
